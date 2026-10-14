@@ -10,6 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { MusicBox } from "@/lib/music-box";
 import { REDUCED_MOTION_QUERY } from "@/lib/use-media-query";
 
 /**
@@ -30,10 +31,15 @@ interface ExperienceContextValue {
   replayCount: number;
   bursts: number[];
   petalsPaused: boolean;
+  musicPlaying: boolean;
+  /** Đổi giá trị để remount nội dung chính — mọi hiệu ứng xuất hiện chạy lại từ đầu. */
+  effectsKey: number;
   openCard: () => void;
   replay: () => void;
   triggerBurst: () => void;
   togglePetals: () => void;
+  toggleMusic: () => void;
+  restartEffects: () => void;
 }
 
 const ExperienceContext = createContext<ExperienceContextValue | null>(null);
@@ -49,6 +55,11 @@ export function ExperienceProvider({ children }: { children: ReactNode }) {
   const [replayCount, setReplayCount] = useState(0);
   const [bursts, setBursts] = useState<number[]>([]);
   const [petalsPaused, setPetalsPaused] = useState(false);
+  const [musicPlaying, setMusicPlaying] = useState(false);
+  const [effectsKey, setEffectsKey] = useState(0);
+  const musicBox = useRef<MusicBox | null>(null);
+  /** Người xem đã tự tắt nhạc — khi "Mở lại tấm thiệp" thì không tự bật lại. */
+  const musicMuted = useRef(false);
   const timers = useRef<number[]>([]);
   const burstId = useRef(0);
 
@@ -62,6 +73,49 @@ export function ExperienceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => clearTimers, [clearTimers]);
+  useEffect(() => () => musicBox.current?.dispose(), []);
+
+  // Trình duyệt chỉ cho phát âm thanh trong một thao tác của người dùng (click/phím),
+  // nên hàm này phải được gọi đồng bộ ngay trong handler. Trạng thái "đang phát" chỉ bật
+  // khi âm thanh thực sự chạy (bị chặn thì `resume()` treo, nút vẫn hiện "Nhạc nền").
+  const startMusic = useCallback(() => {
+    const box = (musicBox.current ??= new MusicBox());
+    if (box.isAudible) return;
+    box
+      .play()
+      .then(() => setMusicPlaying(box.isAudible))
+      .catch(() => setMusicPlaying(false));
+  }, []);
+
+  // Thử phát nhạc ngay khi vào trang (trình duyệt cho phép thì chạy luôn). Nếu bị chặn,
+  // thử lại ở mỗi lần chạm/bấm phím cho tới khi có tiếng — trên điện thoại chỉ `touchend`
+  // mới được tính là thao tác hợp lệ, `pointerdown` thì không.
+  useEffect(() => {
+    startMusic();
+
+    const events = ["pointerdown", "pointerup", "touchend", "keydown"] as const;
+    const removeListeners = () => events.forEach((type) => window.removeEventListener(type, onGesture, true));
+    function onGesture(event: Event) {
+      if (musicBox.current?.isAudible || musicMuted.current) return removeListeners();
+      // Bấm thẳng vào nút nhạc thì để nút tự xử lý, tránh vừa bật đã tắt
+      if (event.target instanceof Element && event.target.closest(".dock-button--music")) return;
+      startMusic();
+    }
+    events.forEach((type) => window.addEventListener(type, onGesture, true));
+    return removeListeners;
+  }, [startMusic]);
+
+  const toggleMusic = useCallback(() => {
+    if (musicBox.current?.isAudible) {
+      musicBox.current.pause();
+      musicMuted.current = true;
+      setMusicPlaying(false);
+    } else {
+      musicMuted.current = false;
+      setMusicPlaying(true);
+      startMusic();
+    }
+  }, [startMusic]);
 
   const triggerBurst = useCallback(() => {
     if (window.matchMedia(REDUCED_MOTION_QUERY).matches) return;
@@ -72,6 +126,8 @@ export function ExperienceProvider({ children }: { children: ReactNode }) {
 
   const openCard = useCallback(() => {
     if (phase !== "sealed") return;
+    // Cú bấm mở phong bì là thao tác đầu tiên của người xem — tận dụng để bật nhạc nền ngay
+    if (!musicMuted.current) startMusic();
     if (window.matchMedia(REDUCED_MOTION_QUERY).matches) {
       // Bỏ qua animation, nhưng vẫn để nội dung hiện ra trước khi chuyển focus vào tiêu đề.
       setPhase("revealing");
@@ -84,7 +140,7 @@ export function ExperienceProvider({ children }: { children: ReactNode }) {
       triggerBurst();
     }, OPENING_MS);
     schedule(() => setPhase("open"), OPENING_MS + REVEALING_MS);
-  }, [phase, schedule, triggerBurst]);
+  }, [phase, schedule, triggerBurst, startMusic]);
 
   const replay = useCallback(() => {
     clearTimers();
@@ -94,6 +150,7 @@ export function ExperienceProvider({ children }: { children: ReactNode }) {
   }, [clearTimers]);
 
   const togglePetals = useCallback(() => setPetalsPaused((paused) => !paused), []);
+  const restartEffects = useCallback(() => setEffectsKey((key) => key + 1), []);
 
   // Chuyển focus tới tiêu đề khi thiệp mở xong, giúp người dùng bàn phím/trình đọc màn hình.
   useEffect(() => {
@@ -120,12 +177,29 @@ export function ExperienceProvider({ children }: { children: ReactNode }) {
       replayCount,
       bursts,
       petalsPaused,
+      musicPlaying,
+      effectsKey,
       openCard,
       replay,
       triggerBurst,
       togglePetals,
+      toggleMusic,
+      restartEffects,
     }),
-    [phase, replayCount, bursts, petalsPaused, openCard, replay, triggerBurst, togglePetals],
+    [
+      phase,
+      replayCount,
+      bursts,
+      petalsPaused,
+      musicPlaying,
+      effectsKey,
+      openCard,
+      replay,
+      triggerBurst,
+      togglePetals,
+      toggleMusic,
+      restartEffects,
+    ],
   );
 
   return (

@@ -1,26 +1,11 @@
 "use client";
 
 import { Music2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { MusicBox } from "@/lib/music-box";
+import { useExperience } from "./ExperienceProvider";
 
-/** Bật/tắt nhạc nền. Không tự phát — chỉ chạy khi người dùng chủ động bấm. */
+/** Bật/tắt nhạc nền. Nhạc tự phát khi người xem bấm mở phong bì (xem `openCard`). */
 export function MusicToggle() {
-  const musicBox = useRef<MusicBox | null>(null);
-  const [playing, setPlaying] = useState(false);
-
-  useEffect(() => () => musicBox.current?.dispose(), []);
-
-  const toggle = () => {
-    musicBox.current ??= new MusicBox();
-    if (musicBox.current.isPlaying) {
-      musicBox.current.pause();
-      setPlaying(false);
-    } else {
-      setPlaying(true);
-      musicBox.current.play().catch(() => setPlaying(false));
-    }
-  };
+  const { musicPlaying: playing, toggleMusic: toggle } = useExperience();
 
   const label = playing ? "Tắt nhạc nền" : "Bật nhạc nền";
 

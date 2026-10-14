@@ -1,6 +1,6 @@
 "use client";
 
-import { MailOpen } from "lucide-react";
+import { MailOpen, Music2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { Bouquet } from "@/components/botanical/Bouquet";
 import { PeonyGlyph, SprigGlyph } from "@/components/botanical/glyphs";
@@ -88,7 +88,7 @@ function LetterPreview() {
 }
 
 export function EnvelopeIntro() {
-  const { phase, openCard, replayCount } = useExperience();
+  const { phase, openCard, replayCount, musicPlaying } = useExperience();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const isSealed = phase === "sealed";
 
@@ -141,6 +141,10 @@ export function EnvelopeIntro() {
             Mở thiệp chúc mừng
           </button>
           <p className="mt-3 text-sm text-ink/60">Có một lời chúc nhỏ đang chờ bạn bên trong</p>
+          <p className={`intro__music-hint ${musicPlaying ? "is-hidden" : ""}`} aria-hidden={musicPlaying}>
+            <Music2 aria-hidden="true" className="size-3.5" strokeWidth={1.75} />
+            Hãy vào màn hình nhé
+          </p>
         </div>
       </div>
     </section>

@@ -441,7 +441,8 @@ body {
   animation: rise-in 0.8s var(--ease-soft) 0.8s both;
 }
 
-.dock-button--music.is-playing {
+.dock-button--music.is-playing,
+.dock-button--scroll.is-active {
   background: rgb(248 221 229 / 0.85);
 }
 
@@ -634,6 +635,30 @@ body {
 .experience:not([data-phase="sealed"]) .intro__copy {
   opacity: 0;
   transform: translateY(-12px);
+}
+
+.intro__music-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--color-rose-deep);
+  opacity: 0.75;
+  animation: hint-breathe 2.6s ease-in-out infinite;
+  transition: opacity 0.6s;
+}
+
+.intro__music-hint.is-hidden {
+  opacity: 0;
+  animation: none;
+}
+
+@keyframes hint-breathe {
+  50% {
+    opacity: 0.4;
+  }
 }
 
 .experience:not([data-phase="sealed"]) .intro__cta {
@@ -950,22 +975,87 @@ body {
    Màn hình 3 — Bộ sưu tập thiệp
    ========================================================================== */
 
-.wish-gallery > li {
-  max-width: 24rem;
-  width: 100%;
-  margin-inline: auto;
+/* Dải thiệp trượt ngang — tràn sát mép màn hình, nội dung căn theo max-w-6xl */
+.wish-track {
+  --track-inset: max(1rem, calc((100% - 72rem) / 2));
+  display: flex;
+  gap: 1.75rem;
+  margin-inline: -1rem;
+  padding: 1.5rem var(--track-inset) 2.5rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--track-inset);
+  scrollbar-width: none;
+  --track-fade: min(3rem, var(--track-inset));
+  mask-image: linear-gradient(90deg, transparent, #000 var(--track-fade), #000 calc(100% - var(--track-fade)), transparent);
+}
+
+.wish-track::-webkit-scrollbar {
+  display: none;
+}
+
+/* Ít thiệp, vừa màn hình: căn giữa, không cần mờ mép */
+.wish-track--fit {
+  justify-content: center;
+  mask-image: none;
 }
 
 @media (min-width: 640px) {
-  .wish-gallery > li:nth-child(even) {
-    margin-top: 3rem;
+  .wish-track {
+    margin-inline: -1.5rem;
   }
 }
 
-@media (min-width: 1024px) {
-  .wish-gallery > li:nth-child(even) {
-    margin-top: 4.5rem;
-  }
+.wish-slide {
+  display: flex;
+  flex: 0 0 min(80vw, 21rem);
+  scroll-snap-align: start;
+}
+
+.wish-slide > .wish-card {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+}
+
+.wish-card__from {
+  display: flex;
+  flex-direction: column;
+  margin-top: auto;
+  padding-top: 1.25rem;
+}
+
+.wish-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 2.75rem;
+  height: 2.75rem;
+  padding-inline: 0.75rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: var(--color-rose-deep);
+  background: rgb(255 255 255 / 0.6);
+  box-shadow: inset 0 0 0 1px rgb(216 183 121 / 0.6);
+  cursor: pointer;
+  transition:
+    background-color 0.3s,
+    transform 0.4s var(--ease-soft);
+}
+
+.wish-nav:hover {
+  background: rgb(255 255 255 / 0.95);
+  transform: translateY(-2px);
+}
+
+.wish-nav--toggle {
+  padding-inline: 1.1rem;
+}
+
+.wish-nav--toggle.is-on {
+  background: rgb(248 221 229 / 0.85);
 }
 
 .wish-card {
@@ -1077,6 +1167,358 @@ body {
   }
   .wish-card:hover .wish-card__shine {
     transform: translateX(130%);
+  }
+}
+
+/* ==========================================================================
+   Màn hình 3.5 — Bức tường polaroid
+   ========================================================================== */
+
+/* Điện thoại: lưới 2 cột, ảnh ngang chiếm trọn hàng; `dense` để ảnh dọc lấp chỗ trống */
+.photo-wall {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-flow: row dense;
+  gap: 2rem 1rem;
+}
+
+.photo-wall__item--landscape {
+  grid-column: span 2;
+}
+
+/* Màn lớn: hàng ngang so le, vừa 4 khung mỗi hàng trong max-w-6xl */
+@media (min-width: 640px) {
+  .photo-wall {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2.5rem 2rem;
+  }
+  .photo-wall > li {
+    width: 14rem;
+  }
+  .photo-wall > li.photo-wall__item--landscape {
+    width: 18.5rem;
+  }
+  .photo-wall > li:nth-child(even) {
+    margin-top: 2rem;
+  }
+}
+
+.polaroid {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.5rem 0;
+  background-color: var(--color-paper);
+  background-image: var(--noise);
+  border-radius: 0.25rem;
+  box-shadow:
+    0 24px 40px -24px rgb(112 45 70 / 0.45),
+    0 6px 12px -6px rgb(112 45 70 / 0.2);
+  transform: rotate(var(--tilt));
+  cursor: zoom-in;
+  transition:
+    transform 0.7s var(--ease-soft),
+    box-shadow 0.7s var(--ease-soft);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.polaroid:focus-visible {
+  outline: 2px solid var(--color-rose);
+  outline-offset: 4px;
+}
+
+.polaroid__tape {
+  position: absolute;
+  top: -0.8rem;
+  left: 50%;
+  z-index: 1;
+  width: 40%;
+  max-width: 5.5rem;
+  height: 1.4rem;
+  background: rgb(241 195 209 / 0.7);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.4);
+  transform: translateX(-50%) rotate(-3deg);
+}
+
+.polaroid__photo {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--color-blush), var(--color-cream));
+}
+
+.photo-wall__item--landscape .polaroid__photo {
+  aspect-ratio: 4 / 3;
+}
+
+.polaroid__caption {
+  display: block;
+  padding: 0.4rem 0 0.55rem;
+  font-family: var(--font-script);
+  font-size: 1.45rem;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--color-rose-deep);
+}
+
+@media (min-width: 640px) {
+  .polaroid {
+    padding: 0.75rem 0.75rem 0;
+  }
+  .polaroid__caption {
+    padding: 0.55rem 0 0.8rem;
+    font-size: 1.85rem;
+  }
+}
+
+@media (hover: hover) {
+  .polaroid:hover .polaroid__shine {
+    transform: translateX(130%);
+  }
+  .polaroid:hover {
+    transform: translateY(-8px) rotate(0deg) scale(1.03);
+    box-shadow:
+      0 40px 60px -30px rgb(112 45 70 / 0.5),
+      0 10px 22px -10px rgb(112 45 70 / 0.22);
+  }
+}
+
+/* --- Ảnh rơi như lá ------------------------------------------------------ */
+
+/* Bỏ fade/translate mặc định của Reveal — hiệu ứng rơi tự lo phần xuất hiện */
+.reveal.photo-drop {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+.photo-drop {
+  perspective: 900px;
+}
+
+.photo-drop__fall {
+  opacity: 0;
+}
+
+.photo-drop.is-visible .photo-drop__fall {
+  animation: leaf-fall 2.6s linear var(--fall-delay) both;
+}
+
+/* Lắc nhẹ quanh miếng băng dính sau khi đã đáp xuống */
+.photo-drop__sway {
+  transform-origin: 50% 0;
+}
+
+.photo-drop.is-visible .photo-drop__sway {
+  animation: photo-sway var(--sway-duration) ease-in-out calc(var(--fall-delay) + 2.6s) infinite alternate;
+}
+
+/* Rơi lả tả: lượn trái phải, lật nhẹ 3D, chậm dần khi gần chạm đất */
+@keyframes leaf-fall {
+  0% {
+    opacity: 0;
+    transform: translate3d(var(--fall-drift), -460px, 0) rotate(var(--fall-spin)) rotateY(50deg);
+    animation-timing-function: ease-in-out;
+  }
+  10% {
+    opacity: 1;
+  }
+  30% {
+    transform: translate3d(calc(var(--fall-drift) * -0.8), -300px, 0) rotate(calc(var(--fall-spin) * -0.7))
+      rotateY(-35deg) rotateX(12deg);
+    animation-timing-function: ease-in-out;
+  }
+  55% {
+    transform: translate3d(calc(var(--fall-drift) * 0.5), -150px, 0) rotate(calc(var(--fall-spin) * 0.45))
+      rotateY(22deg) rotateX(-8deg);
+    animation-timing-function: ease-in-out;
+  }
+  78% {
+    transform: translate3d(calc(var(--fall-drift) * -0.2), -40px, 0) rotate(calc(var(--fall-spin) * -0.2))
+      rotateY(-8deg);
+    animation-timing-function: ease-out;
+  }
+  92% {
+    transform: translate3d(0, 5px, 0) rotate(1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes photo-sway {
+  from {
+    transform: rotate(-1.1deg);
+  }
+  to {
+    transform: rotate(1.1deg);
+  }
+}
+
+/* Ảnh "hiện hình" như ảnh lấy liền sau khi đáp xuống */
+.photo-drop .polaroid__photo img {
+  filter: sepia(0.7) brightness(1.7) contrast(0.55) blur(3px);
+}
+
+.photo-drop.is-visible .polaroid__photo img {
+  animation: photo-develop 2.8s ease-out calc(var(--fall-delay) + 1.9s) both;
+}
+
+@keyframes photo-develop {
+  to {
+    filter: none;
+  }
+}
+
+.polaroid__shine {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.45) 50%, transparent 65%);
+  transform: translateX(-130%);
+  transition: transform 1.1s var(--ease-soft);
+}
+
+.photo-replay {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.3rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  color: var(--color-rose-deep);
+  background: rgb(255 255 255 / 0.6);
+  box-shadow: inset 0 0 0 1px rgb(216 183 121 / 0.6);
+  cursor: pointer;
+  transition:
+    background-color 0.3s,
+    transform 0.4s var(--ease-soft);
+}
+
+.photo-replay:hover {
+  background: rgb(255 255 255 / 0.95);
+  transform: translateY(-2px);
+}
+
+.photo-replay:hover svg {
+  rotate: -360deg;
+  transition: rotate 0.8s var(--ease-soft);
+}
+
+.lightbox {
+  width: 100vw;
+  max-width: none;
+  height: 100svh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-cream);
+}
+
+.lightbox::backdrop {
+  background: rgb(46 16 28 / 0.88);
+  backdrop-filter: blur(6px);
+}
+
+.lightbox[open] {
+  animation: lightbox-in 0.4s var(--ease-soft);
+}
+
+@keyframes lightbox-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+.lightbox__figure {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 4.5rem 1rem 1.5rem;
+  pointer-events: none;
+}
+
+.lightbox__photo {
+  position: relative;
+  width: 100%;
+  max-width: 70rem;
+  flex: 1;
+  animation: lightbox-slide 0.5s var(--ease-soft) both;
+}
+
+.lightbox__photo--prev {
+  --slide-from: -40px;
+}
+
+@keyframes lightbox-slide {
+  from {
+    opacity: 0;
+    transform: translateX(var(--slide-from, 40px)) scale(0.97);
+  }
+}
+
+.lightbox__caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.lightbox__btn {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  color: var(--color-cream);
+  background: rgb(255 255 255 / 0.1);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2);
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.lightbox__btn:hover,
+.lightbox__btn:focus-visible {
+  background: rgb(255 255 255 / 0.22);
+}
+
+.lightbox__btn--close {
+  top: 1rem;
+  right: 1rem;
+}
+
+.lightbox__btn--prev,
+.lightbox__btn--next {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.lightbox__btn--prev {
+  left: 0.75rem;
+}
+
+.lightbox__btn--next {
+  right: 0.75rem;
+}
+
+@media (max-width: 639px) {
+  /* Trên điện thoại, đưa nút chuyển ảnh xuống dưới để không che ảnh */
+  .lightbox__btn--prev,
+  .lightbox__btn--next {
+    top: auto;
+    bottom: 1.25rem;
+    transform: none;
   }
 }
 
@@ -1204,6 +1646,27 @@ body {
   to {
     rotate: 360deg;
   }
+}
+
+/* ==========================================================================
+   Tự cuộn — lớp phủ chuyển cảnh khi quay về đầu trang
+   ========================================================================== */
+
+.loop-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 55; /* dưới .control-dock để vẫn bấm được nút tắt */
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(60% 50% at 50% 45%, rgb(248 221 229 / 0.9), transparent 75%),
+    var(--color-cream);
+  backdrop-filter: blur(10px);
+  transition: opacity 1.1s cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+.loop-veil.is-visible {
+  opacity: 1;
 }
 
 /* ==========================================================================

@@ -20,6 +20,10 @@
 # production
 /build
 
+# ảnh cá nhân của chị em — repo public nên không commit, chỉ deploy lên S3
+/photos-raw/
+/public/photos/
+
 # misc
 .DS_Store
 *.pem

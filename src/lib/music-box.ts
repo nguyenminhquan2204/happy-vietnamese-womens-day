@@ -98,10 +98,15 @@ export class MusicBox {
     return this.playing;
   }
 
+  /** Âm thanh thực sự đang chạy — trình duyệt chặn tự phát thì context vẫn ở trạng thái "suspended". */
+  get isAudible(): boolean {
+    return this.playing && this.context?.state === "running";
+  }
+
   /** Phải được gọi trong một thao tác của người dùng (click) để trình duyệt cho phép phát âm thanh. */
   async play(): Promise<void> {
     const context = this.ensureGraph();
-    if (this.suspendTimer !== null) {
+    if (this.suspendTimer !== null) { 
       window.clearTimeout(this.suspendTimer);
       this.suspendTimer = null;
     }

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "01",
+    "orientation": "portrait"
+  },
+  {
+    "id": "02",
+    "orientation": "portrait"
+  },
+  {
+    "id": "03",
+    "orientation": "portrait"
+  },
+  {
+    "id": "04",
+    "orientation": "portrait"
+  },
+  {
+    "id": "05",
+    "orientation": "landscape"
+  },
+  {
+    "id": "06",
+    "orientation": "portrait"
+  },
+  {
+    "id": "07",
+    "orientation": "landscape"
+  },
+  {
+    "id": "08",
+    "orientation": "portrait"
+  }
+]
